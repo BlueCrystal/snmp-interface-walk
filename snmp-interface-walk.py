@@ -4,7 +4,7 @@ import argparse
 import sys
 import subprocess
 
-#Version 0.2b
+#Version 0.3a
 def parse_args(arguments):
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('ip', help='destination IP')
@@ -111,7 +111,7 @@ def run_checks(ip):
 #    subprocess.call("snmpget -v2c -c SNMPCOMMUNITYHERE {} iso.3.6.1.2.1.47.1.1.1.1.11.1".format(ip).split())
 #    subprocess.call("snmpget -v2c -c SNMPCOMMUNITYHERE {} iso.3.6.1.2.1.47.1.1.1.1.11.1001".format(ip).split())
     print("\033[1m" + "Cleaning Up" + "\033[0m")
-    cleanup = subprocess.call("rm -f intlist && rm csv", shell=True)
+    cleanup = subprocess.call("rm -f intlist && rm -f intlist* && rm -f *list && rm *csv", shell=True)
 
 def ciscoserial(ip):
     print("\033[1m" + "Device:" + "\033[0m")
