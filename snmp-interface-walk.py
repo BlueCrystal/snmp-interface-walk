@@ -4,7 +4,7 @@ import argparse
 import sys
 import subprocess
 
-#Version 0.2a
+#Version 0.2b
 def parse_args(arguments):
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('ip', help='destination IP')
@@ -14,48 +14,80 @@ def parse_args(arguments):
     parser.add_argument('-s', help='Obtain Serial Number', action='store_true')
     args = parser.parse_args(arguments)
     return args
-
+#Testing for Validation Begins
 def run_checks(ip):
     print("\033[1m" + "Running Test Checks for Validation" + "\033[0m")
     print("\033[1m" + "Ping Test" + "\033[0m")
+#Ping Test. If there's no response, the script quits.
     ping = os.system("ping -c 1 {}".format(ip))
     if ping == 0:
         print("\033[1m" + "Site is up, add Ping Check" + "\033[0m")
     else:
         sys.exit("\033[1m" + "Site down, ignore" + "\033[0m")
+#SNMP Testing. Stuff that actually might matter.
+#Testing begins here. First SNMP Test. Displays essentially a sh ver. Not fully documented in the Cisco OID Database.
+#If there is no response due to no SNMP, the test will fail out here and the device is either not managable,
+#or the SNMP Community has not been injected.
     print ("\033[1m" + "Testing SNMP Community" + "\033[0m")
     testsnmp = subprocess.call("snmpget -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.1.1.0".format(ip).split())
     if testsnmp == 0:
         print("\033[1m" + "SNMP Community Injected, Add Checks" + "\033[0m")
     else:
         sys.exit("\033[1m" + "SNMP Community Not Injected, Leave Ping Only" + "\033[0m")
-    print("\033[1m" + "Interface Status Sample Test" + "\033[0m")
+#Runs SNMP Check for Interface Status. Uses the check_ifstatus nagios script.
+        print("\033[1m" + "Interface Status Sample Test" + "\033[0m")
     ifstatus = subprocess.call("/usr/lib/nagios/plugins/check_ifstatus -v2 -H {} -C SNMPCOMMUNITYHERE\n\n".format(ip).split())
+#Runs SNMP Check for CPU Status. Uses the SNMP Load nagios script.
     print("\033[1m" + "CPU Status Sample Test" + "\033[0m")
     cpustatus = subprocess.call("/usr/lib/nagios/plugins/check_snmp_load.pl -H {} -T cisco -C SNMPCOMMUNITYHERE -w 101,101,90 -c 102,102,95\n\n".format(ip).split())
+#Runs SNMP Check for Environment Status. Uses the SNMP Environment nagios script.
     print("\033[1m" + "Environment Status Sample Test" + "\033[0m")
     envstatus = subprocess.call("/usr/lib/nagios/plugins/check_snmp_env.pl -H {} -T cisco -C SNMPCOMMUNITYHERE\n\n".format(ip).split())
+#Runs Interface Error Test. Uses the Interface Errors nagios script.
     print("\033[1m" + "Interface Error Sample Test" + "\033[0m")
     iferror = subprocess.call("/usr/lib/nagios/plugins/check_iferrors -H {} -C SNMPCOMMUNITYHERE -w 300\n\n".format(ip).split())
+#Prints the Full List of Interfaces with their Type (Serial, Fa, Gi, etc)
     print("\033[1m" + "Printing Full List of Interfaces" + "\033[0m")
     intlistfull = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.2".format(ip).split())
+#Prints the Full List of Physical Interfaces Regardless of whether it's down or not
     print("\033[1m" + "Printing Full List of Physical Interfaces" + "\033[0m")
-    intlistphys = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.2 | grep 'FastEthernet\|GigabitEthernet\|Serial\|Port-channel\|Ethernet\|Multilink\|Cellular'".format(ip), shell=True)
+    intlistphys = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.2 | grep 'FastEthernet\|GigabitEthernet\|Serial\|Ethernet\|Cellular\|Stack\|TenGigabitEthernet\|ATM'".format(ip), shell=True)
+#Prints the Full List of Virtual Interfaces regardless of whether it's down or not
+        print("\033[1m" + "Printing Full List of Virtual Interfaces" + "\033[0m")
+        intlistvirt = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.2 | grep 'Multilink\|Port-channel\|Vlan\|Embedded-Service-Engine\|Loopback'".format(ip), shell=True)
+#Prints the Full List of Physical and Virtual Interfaces
     print("\033[1m" + "Printing Full List of Enabled Interfaces" + "\033[0m")
     intlisten = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.8 | grep 'INTEGER: 1' > intlist".format(ip), shell=True)
     subprocess.call("cat intlist", shell=True)
+#Prints the Full List of Interface Descriptions
     print("\033[1m" + "Printing Full List of Interface Descriptions" + "\033[0m")
     intlistdesc = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.31.1.1.1.18 > intlistdesc".format(ip), shell=True)
     subprocess.call("cat intlistdesc", shell=True)
+#Prints the current Status of All Interfaces
     print("\033[1m" + "Printing Status of Interfaces" + "\033[0m")
-    intliststatus = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.8 > intliststatus".format(ip), shell=True)
+    intliststatus = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.2.1.2.2.1.8 > intliststatus && sed -i 's/1/Up/g' && sed -i 's/2/Down/g && sed -i 's/3/Testing/g && sed -i 's/4/Unknown/g && sed -i 's/5/NotPresent/g && sed -i 's/7/LowerLayerDown/g' ".format(ip), shell=True)
     subprocess.call("cat intliststatus", shell=True)
-
+#Prints a Comma Separated List of Integers for all Enabled Devices
     print("\033[1m" + "Printing comma separated integers for all Enabled Devices" + "\033[0m")
     commalist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER)' intlist | paste -s -d , >> csv", shell=True)
     with open('csv', 'r') as in_file:
         text = in_file.read()
         print("\033[31;1m" + text + "\033[0;0m")
+#Prints a Comma Separated List of All Stack Ports
+    print("\033[1m" + "Printing comma separated integers for all Stack Ports" + "\033[0m")
+    commalist = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.4.1.9.9.500.1.2.2.1.1 > stacklist | grep "INTEGER: 1" stacklist | grep -oP '(?<=\d\.)\d+(?= = INTEGER)' stacklist | paste -s -d , >> stackcsv", shell=True)
+    with open('csv', 'r') as in_file:
+        text = in_file.read()
+        print("\033[31;1m" + text + "\033[0;0m")
+#Prints a Comma Separated List of All Trunk Ports
+    print("\033[1m" + "Printing comma separated integers for all Trunk Ports" + "\033[0m")
+    trunklist = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.4.1.9.9.46.1.6.1.1.14 > trunklist | grep "INTEGER: 1" trunklist | grep -oP '(?<=\d\.)\d+(?= = INTEGER)' stacklist | paste -s -d , >> trunkcsv", shell=True)
+    with open('csv', 'r') as in_file:
+        text = in_file.read()
+        print("\033[31;1m" + text + "\033[0;0m")
+#Prints a Comma Separated List of All Trunk and Switch Ports
+    print("\033[1m" + "Printing comma separated integers for all Trunk and Switch Ports" + "\033[0m")  
+    trunkswitch = subprocess.call("echo ',' >> stackcsv && cat stackcsv >> trunkcsv", shell=True)
     if testsnmp == 0:
         print("\033[1m" + "SNMP Community Injected, Add Checks" + "\033[0m")
     else:
@@ -111,4 +143,3 @@ if __name__ == '__main__':
         print("running Cisco")
         ciscoserial(args.ip)
     print("IP Address: {}".format(args.ip))
-
