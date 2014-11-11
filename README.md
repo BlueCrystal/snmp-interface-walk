@@ -134,4 +134,4 @@ IP Address: 10.165.182.58
 </pre></li>
 
 
-<u>This script was more or less written by <a href="https://github.com/liliff" lae</a> and <a href="https://github.com/Fugiman fugiman"</a> after bugging them night after night. I just threw in other commands I needed.</ui>
+<u>This script was more or less written by @liliff and @Fugiman after bugging them night after night. I just threw in other commands I needed.</u>
