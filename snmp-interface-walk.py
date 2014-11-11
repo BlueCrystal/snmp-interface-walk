@@ -4,7 +4,7 @@ import argparse
 import sys
 import subprocess
 
-#Version 0.4b
+#Version 0.4d
 def parse_args(arguments):
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('ip', help='destination IP')
@@ -87,7 +87,7 @@ def run_checks(ip):
 
 #Prints a Comma Separated List of Integers for all Enabled Interfaces
         print("\033[1m" + "Printing comma separated integers for all Enabled Interfaces" + "\033[0m")
-        commaintlist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER)' intlistupstatus | paste -s -d , >> csv", shell=True)
+        commaintlist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER)' intlistupstatus | paste -s -d , >> csv")
         with open('csv', 'r') as in_file:
                 text = in_file.read()
                 print("\033[31;1m" + text + "\033[0;0m")
@@ -99,7 +99,7 @@ def run_checks(ip):
    
 #Prints a Comma Separated List of Stack Ports that are up
         print("\033[1m" + "Printing comma separated integers for all Up Stack Ports" + "\033[0m")
-        commastackuplist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER: 1)' intliststackstatus | paste -s -d , >> stackcsv", shell=True)
+        commastackuplist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER: 1)' intliststackstatus | paste -s -d , >> stackcsv")
         with open('csv', 'r') as in_file:
                 text = in_file.read()
                 print("\033[31;1m" + text + "\033[0;0m")
@@ -114,12 +114,12 @@ def run_checks(ip):
 
 #Prints a Full List of Trunk Ports
         print("\033[1m" + "Printing List of All Trunk Ports" + "\033[0m")
-        trunklist = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.4.1.9.9.46.1.6.1.1.14 > intlisttrunkstatus".format(ip), shell=True)
+        trunklist = subprocess.call("snmpbulkwalk -v2c -c SNMPCOMMUNITYHERE {} 1.3.6.1.4.1.9.9.46.1.6.1.1.14 > intlisttrunkstatus".format(ip))
         outintlisttrunkstatus = subprocess.call("cat intlisttrunkstatus", shell=True)
                    
 #Prints a Comma Separated List of Trunk Ports
         print("\033[1m" + "Printing a Comma Separated List of All Up Trunk Ports" + "\033[0m")
-        commatrunklist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER: 1)' intlisttrunkstatus | paste -s -d , trunkcsv", shell=True)
+        commatrunklist = subprocess.call("grep -oP '(?<=\d\.)\d+(?= = INTEGER: 1)' intlisttrunkstatus | paste -s -d , trunkcsv")
         with open ('csv', 'r') as in_file:
                 text = in_file.read()
                 print("\033[31;1m" + text + "\033[0;0m")
@@ -194,4 +194,3 @@ if __name__ == '__main__':
         print("running Cisco")
         ciscoserial(args.ip)
     print("IP Address: {}".format(args.ip))
-
